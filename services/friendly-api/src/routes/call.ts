@@ -121,9 +121,10 @@ export async function callRoutes(
           crisisText,
           getVoiceId(user.voiceStyle)
         );
+        const crisisExt = ttsResult.mimeType === 'audio/mpeg' ? 'mp3' : 'wav';
         const audioUrl = await uploadBuffer(
           ttsResult.audioBuffer,
-          `audio/${uid}/${Date.now()}-response.wav`,
+          `audio/${uid}/${Date.now()}-response.${crisisExt}`,
           ttsResult.mimeType
         );
 
@@ -220,9 +221,10 @@ export async function callRoutes(
       );
 
       // Upload audio
+      const audioExt = ttsResult.mimeType === 'audio/mpeg' ? 'mp3' : 'wav';
       const audioUrl = await uploadBuffer(
         ttsResult.audioBuffer,
-        `audio/${uid}/${Date.now()}-response.wav`,
+        `audio/${uid}/${Date.now()}-response.${audioExt}`,
         ttsResult.mimeType
       );
 
@@ -298,12 +300,11 @@ export async function callRoutes(
 }
 
 function getVoiceId(voiceStyle: string): string {
-  // Map voice styles to provider-specific voice IDs
-  // These would be replaced with real voice IDs from your TTS provider
+  // ElevenLabs premade voice IDs
   const voiceMap: Record<string, string> = {
-    male: 'voice-male-default',
-    female: 'voice-female-default',
-    neutral: 'voice-neutral-default',
+    male: 'pNInz6obpgDQGcFmaJgB',     // Adam
+    female: 'EXAVITQu4vr4xnSDxMaL',    // Sarah
+    neutral: 'onwK4e9ZLuTAKqWW03F9',   // Daniel
   };
-  return voiceMap[voiceStyle] ?? 'voice-neutral-default';
+  return voiceMap[voiceStyle] ?? voiceMap.neutral;
 }

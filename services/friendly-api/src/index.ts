@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
@@ -12,11 +13,11 @@ import { memoryRoutes } from './routes/memory.js';
 import { profileRoutes } from './routes/profile.js';
 import { imageRoutes } from './routes/images.js';
 import type { ProviderRegistry } from './providers/types.js';
-import { MockSTTProvider } from './providers/stt/index.js';
-import { MockLLMProvider } from './providers/llm/index.js';
-import { MockTTSProvider } from './providers/tts/index.js';
-import { MockImageProvider } from './providers/image/index.js';
-import { MockVisionProvider } from './providers/vision/index.js';
+import { MockSTTProvider, WhisperSTTProvider } from './providers/stt/index.js';
+import { MockLLMProvider, OpenAILLMProvider } from './providers/llm/index.js';
+import { MockTTSProvider, ElevenLabsTTSProvider } from './providers/tts/index.js';
+import { MockImageProvider, DallEImageProvider } from './providers/image/index.js';
+import { MockVisionProvider, GPT4VisionProvider } from './providers/vision/index.js';
 
 // ─── Firebase Admin Init ────────────────────────────────────
 admin.initializeApp({
@@ -37,23 +38,13 @@ function createProviders(): ProviderRegistry {
     };
   }
 
-  // Real providers would be instantiated here:
-  //
-  // return {
-  //   stt: new WhisperSTTProvider(config.openaiApiKey),
-  //   llm: new OpenAILLMProvider(config.openaiApiKey),
-  //   tts: new ElevenLabsTTSProvider(config.elevenLabsApiKey),
-  //   image: new DallEImageProvider(config.openaiApiKey),
-  //   vision: new GPT4VisionProvider(config.openaiApiKey),
-  // };
-
-  console.log('Using MOCK providers (no real provider implementations yet)');
+  console.log('Using REAL AI providers');
   return {
-    stt: new MockSTTProvider(),
-    llm: new MockLLMProvider(),
-    tts: new MockTTSProvider(),
-    image: new MockImageProvider(),
-    vision: new MockVisionProvider(),
+    stt: new WhisperSTTProvider(config.openaiApiKey),
+    llm: new OpenAILLMProvider(config.openaiApiKey),
+    tts: new ElevenLabsTTSProvider(config.elevenLabsApiKey),
+    image: new DallEImageProvider(config.openaiApiKey),
+    vision: new GPT4VisionProvider(config.openaiApiKey),
   };
 }
 
