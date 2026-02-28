@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Users ────────────────────────────────────────────────
+    match /users/{uid} {
+      // Users can only read their own profile
+      // Writes are done server-side (Cloud Run with admin SDK)
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // Server-side only
+    }
+
+    // ─── Usage ────────────────────────────────────────────────
+    match /usage/{uid}/days/{date} {
+      // Users can read their own usage
+      // Writes are server-side only (metering service)
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ─── Sessions ─────────────────────────────────────────────
+    match /sessions/{sessionId} {
+      // Users can read sessions they own
+      allow read: if request.auth != null
+                  && resource.data.uid == request.auth.uid;
+      allow write: if false; // Server-side only
+
+      // Turns within a session
+      match /turns/{turnId} {
+        allow read: if request.auth != null
+                    && get(/databases/$(database)/documents/sessions/$(sessionId)).data.uid == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // ─── Memory ───────────────────────────────────────────────
+    match /memory/{uid} {
+      // Users can read their own memory (for UI display)
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false; // Server-side only
+    }
+
+    // ─── Proactive Queue ──────────────────────────────────────
+    match /proactiveQueue/{jobId} {
+      // No client access
+      allow read, write: if false;
+    }
+
+    // ─── Safety Flags ─────────────────────────────────────────
+    match /safety_flags/{flagId} {
+      // No client access — safety team only via admin console
+      allow read, write: if false;
+    }
+
+    // ─── Catch-all: deny everything else ──────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

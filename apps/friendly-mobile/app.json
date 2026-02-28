@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Friendly",
+    "slug": "friendly",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "backgroundColor": "#0A0A0F"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.friendly.app",
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Friendly needs microphone access for voice calls.",
+        "UIBackgroundModes": ["audio", "remote-notification"]
+      },
+      "googleServicesFile": "./GoogleService-Info.plist"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0A0A0F"
+      },
+      "package": "com.friendly.app",
+      "googleServicesFile": "./google-services.json",
+      "permissions": ["RECORD_AUDIO", "RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+    },
+    "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "icon": "./src/assets/notification-icon.png",
+          "color": "#6C5CE7",
+          "sounds": ["./src/assets/sounds/call-ringtone.wav"]
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Friendly needs microphone access for voice calls."
+        }
+      ]
+    ]
+  }
+}

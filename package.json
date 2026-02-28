@@ -1,0 +1,18 @@
+{
+  "name": "friendly-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/friendly-mobile",
+    "services/friendly-api"
+  ],
+  "scripts": {
+    "mobile": "cd apps/friendly-mobile && npx expo start",
+    "api:dev": "cd services/friendly-api && npm run dev",
+    "api:build": "cd services/friendly-api && npm run build",
+    "deploy:api": "cd infra && bash deploy.sh",
+    "deploy:rules": "firebase deploy --only firestore:rules,firestore:indexes"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
