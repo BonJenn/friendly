@@ -4,7 +4,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { initializeMemory } from '../services/memory.js';
 import type { Persona, VoiceStyle, UserProfile } from '../types/index.js';
 
-const db = admin.firestore();
+function db() { return admin.firestore(); }
 
 // Friend nickname pool by persona
 const FRIEND_NICKNAMES: Record<Persona, string[]> = {
@@ -58,7 +58,7 @@ export async function profileRoutes(app: FastifyInstance): Promise<void> {
         fcmToken: null,
       };
 
-      await db.collection('users').doc(uid).set(profile);
+      await db().collection('users').doc(uid).set(profile);
 
       // Initialize empty memory
       await initializeMemory(uid);
@@ -98,7 +98,7 @@ export async function profileRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(400).send({ error: 'No valid fields to update' });
       }
 
-      await db.collection('users').doc(uid).update(sanitized);
+      await db().collection('users').doc(uid).update(sanitized);
       return { ok: true };
     }
   );
@@ -109,7 +109,7 @@ export async function profileRoutes(app: FastifyInstance): Promise<void> {
     { preHandler: authMiddleware },
     async (request, reply) => {
       const { uid } = request.authUser;
-      const doc = await db.collection('users').doc(uid).get();
+      const doc = await db().collection('users').doc(uid).get();
 
       if (!doc.exists) {
         return reply.code(404).send({ error: 'Profile not found' });

@@ -3,10 +3,10 @@ import type { UserMemory } from '../types/index.js';
 import type { ProviderRegistry } from '../providers/types.js';
 import { buildSummarizationPrompt } from '../providers/llm/prompts.js';
 
-const db = admin.firestore();
+function db() { return admin.firestore(); }
 
 export async function getMemory(uid: string): Promise<UserMemory | null> {
-  const doc = await db.collection('memory').doc(uid).get();
+  const doc = await db().collection('memory').doc(uid).get();
   if (!doc.exists) return null;
   return doc.data() as UserMemory;
 }
@@ -21,7 +21,7 @@ export async function initializeMemory(uid: string): Promise<UserMemory> {
     lastTopics: [],
     updatedAt: Date.now(),
   };
-  await db.collection('memory').doc(uid).set(memory);
+  await db().collection('memory').doc(uid).set(memory);
   return memory;
 }
 
@@ -67,7 +67,7 @@ export async function updateMemoryAfterSession(
       parsed = JSON.parse(result.text);
     } catch {
       // If parsing fails, just update the timestamp
-      await db.collection('memory').doc(uid).update({ updatedAt: Date.now() });
+      await db().collection('memory').doc(uid).update({ updatedAt: Date.now() });
       return;
     }
 
@@ -79,7 +79,7 @@ export async function updateMemoryAfterSession(
     ].slice(-10);
     const updatedTopics = (parsed.topics ?? []).slice(-5);
 
-    await db.collection('memory').doc(uid).update({
+    await db().collection('memory').doc(uid).update({
       summary: parsed.summary || existing.summary,
       facts: updatedFacts,
       insideJokes: updatedJokes,

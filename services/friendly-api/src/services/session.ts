@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { v4 as uuid } from 'uuid';
 import type { Session, SessionType, Turn } from '../types/index.js';
 
-const db = admin.firestore();
+function db() { return admin.firestore(); }
 
 export async function createSession(
   uid: string,
@@ -18,12 +18,12 @@ export async function createSession(
     turnCount: 0,
   };
 
-  await db.collection('sessions').doc(id).set(session);
+  await db().collection('sessions').doc(id).set(session);
   return session;
 }
 
 export async function getSession(sessionId: string): Promise<Session | null> {
-  const doc = await db.collection('sessions').doc(sessionId).get();
+  const doc = await db().collection('sessions').doc(sessionId).get();
   if (!doc.exists) return null;
   return doc.data() as Session;
 }
@@ -46,7 +46,7 @@ export async function addTurn(
   const turnId = uuid();
   const turnDoc: Turn = { ...turn, sessionId };
 
-  await db
+  await db()
     .collection('sessions')
     .doc(sessionId)
     .collection('turns')
@@ -54,7 +54,7 @@ export async function addTurn(
     .set(turnDoc);
 
   // Increment turn count
-  await db
+  await db()
     .collection('sessions')
     .doc(sessionId)
     .update({
@@ -65,7 +65,7 @@ export async function addTurn(
 }
 
 export async function endSession(sessionId: string): Promise<void> {
-  await db.collection('sessions').doc(sessionId).update({
+  await db().collection('sessions').doc(sessionId).update({
     status: 'ended',
     endedAt: Date.now(),
   });
@@ -75,7 +75,7 @@ export async function getSessionTurns(
   sessionId: string,
   limit: number = 20
 ): Promise<Turn[]> {
-  const snap = await db
+  const snap = await db()
     .collection('sessions')
     .doc(sessionId)
     .collection('turns')

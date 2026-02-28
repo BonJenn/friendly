@@ -6,7 +6,7 @@ import type { ProviderRegistry } from '../providers/types.js';
 import * as admin from 'firebase-admin';
 import type { UserProfile } from '../types/index.js';
 
-const db = admin.firestore();
+function db() { return admin.firestore(); }
 
 export async function imageRoutes(
   app: FastifyInstance,
@@ -26,7 +26,7 @@ export async function imageRoutes(
       }
 
       // Get user tier
-      const userDoc = await db.collection('users').doc(uid).get();
+      const userDoc = await db().collection('users').doc(uid).get();
       if (!userDoc.exists) {
         return reply.code(404).send({ error: 'User not found' });
       }

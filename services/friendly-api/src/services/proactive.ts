@@ -6,7 +6,7 @@ import type { ProviderRegistry } from '../providers/types.js';
 import { buildSystemPrompt } from '../providers/llm/prompts.js';
 import { getMemory } from './memory.js';
 
-const db = admin.firestore();
+function db() { return admin.firestore(); }
 
 /**
  * Main proactive outreach job. Called by Cloud Scheduler every 15 minutes.
@@ -25,7 +25,7 @@ export async function runProactiveJob(
   let sent = 0;
 
   // Get all users who have proactive calls enabled (non-free tier)
-  const usersSnap = await db
+  const usersSnap = await db()
     .collection('users')
     .where('onboardingComplete', '==', true)
     .where('tier', 'in', ['core', 'power'])
@@ -39,7 +39,7 @@ export async function runProactiveJob(
     if (!isInCallWindow(user)) continue;
 
     // Check cooldown: don't contact more than once per 4 hours
-    const recentJobs = await db
+    const recentJobs = await db()
       .collection('proactiveQueue')
       .where('uid', '==', user.uid)
       .where('status', '==', 'sent')
@@ -82,12 +82,12 @@ export async function runProactiveJob(
         text: message,
         createdAt: now,
       };
-      await db.collection('proactiveQueue').doc(jobId).set(job);
+      await db().collection('proactiveQueue').doc(jobId).set(job);
 
       // Send FCM notification
       if (user.fcmToken) {
         await sendProactiveNotification(user, type, message, jobId);
-        await db
+        await db()
           .collection('proactiveQueue')
           .doc(jobId)
           .update({ status: 'sent' });
@@ -124,7 +124,7 @@ function isInCallWindow(user: UserProfile): boolean {
 
 async function getWeeklyProactiveCount(uid: string): Promise<number> {
   const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const snap = await db
+  const snap = await db()
     .collection('proactiveQueue')
     .where('uid', '==', uid)
     .where('type', '==', 'call')
@@ -226,7 +226,7 @@ async function sendProactiveNotification(
     // Schedule a follow-up text if user doesn't answer (after 2 minutes)
     setTimeout(async () => {
       try {
-        const jobDoc = await db.collection('proactiveQueue').doc(jobId).get();
+        const jobDoc = await db().collection('proactiveQueue').doc(jobId).get();
         const job = jobDoc.data() as ProactiveJob | undefined;
         // If the call was sent but no session was created, send follow-up
         if (job?.status === 'sent' && user.fcmToken) {
