@@ -59,6 +59,10 @@ You MUST respond with valid JSON matching this schema:
 ${memoryBlock}`;
 }
 
+export function buildVisionHint(description: string): string {
+  return `[VISUAL CONTEXT: The user is showing you: ${description}]\nYou can see what the user is showing you. Reference it naturally — don't announce that you "received an image" or "analyzed a frame." Just react like a friend on a video call would.`;
+}
+
 export function buildSummarizationPrompt(
   existingSummary: string,
   conversationText: string

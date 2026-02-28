@@ -20,6 +20,7 @@ export interface TierLimits {
   voiceSecondsPerDay: number;
   proactiveCallsPerWeek: number;
   imagesPerWeek: number;
+  visionFramesPerDay: number;
   memoryDepth: 'shallow' | 'standard' | 'deep';
 }
 
@@ -29,6 +30,7 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     voiceSecondsPerDay: 300,
     proactiveCallsPerWeek: 0,
     imagesPerWeek: 0,
+    visionFramesPerDay: 0,
     memoryDepth: 'shallow',
   },
   starter: {
@@ -36,6 +38,7 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     voiceSecondsPerDay: 600,
     proactiveCallsPerWeek: 0,
     imagesPerWeek: 1,
+    visionFramesPerDay: 20,
     memoryDepth: 'standard',
   },
   core: {
@@ -43,6 +46,7 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     voiceSecondsPerDay: 1800,
     proactiveCallsPerWeek: 2,
     imagesPerWeek: 3,
+    visionFramesPerDay: 60,
     memoryDepth: 'standard',
   },
   power: {
@@ -50,6 +54,7 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     voiceSecondsPerDay: 3600,
     proactiveCallsPerWeek: 5,
     imagesPerWeek: 10,
+    visionFramesPerDay: 200,
     memoryDepth: 'deep',
   },
 };
@@ -81,6 +86,7 @@ export interface DailyUsage {
   messagesUsed: number;
   voiceSecondsUsed: number;
   imagesUsed: number;
+  visionFramesUsed: number;
   callsPlaced: number;
   callsReceived: number;
   date: string;

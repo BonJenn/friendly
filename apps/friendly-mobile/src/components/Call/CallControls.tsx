@@ -8,6 +8,8 @@ interface CallControlsProps {
   onStartRecording: () => void;
   onStopRecording: () => void;
   onEndCall: () => void;
+  onToggleCamera?: () => void;
+  cameraActive?: boolean;
   disabled?: boolean;
 }
 
@@ -16,6 +18,8 @@ export function CallControls({
   onStartRecording,
   onStopRecording,
   onEndCall,
+  onToggleCamera,
+  cameraActive = false,
   disabled = false,
 }: CallControlsProps) {
   const handleRecord = () => {
@@ -33,39 +37,62 @@ export function CallControls({
     onEndCall();
   };
 
+  const handleCamera = () => {
+    mediumTap();
+    onToggleCamera?.();
+  };
+
   return (
     <View style={styles.container}>
-      {/* Record / Stop button */}
-      <TouchableOpacity
-        style={[
-          styles.recordButton,
-          isRecording && styles.recordButtonActive,
-          disabled && styles.disabled,
-        ]}
-        onPress={handleRecord}
-        disabled={disabled}
-        activeOpacity={0.7}
-      >
-        <View
+      <View style={styles.row}>
+        {/* Camera toggle */}
+        {onToggleCamera && (
+          <TouchableOpacity
+            style={[
+              styles.secondaryButton,
+              cameraActive && styles.secondaryButtonActive,
+            ]}
+            onPress={handleCamera}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.secondaryIcon}>
+              {cameraActive ? '📷' : '📷'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Record / Stop button */}
+        <TouchableOpacity
           style={[
-            styles.recordInner,
-            isRecording && styles.recordInnerActive,
+            styles.recordButton,
+            isRecording && styles.recordButtonActive,
+            disabled && styles.disabled,
           ]}
-        />
-      </TouchableOpacity>
+          onPress={handleRecord}
+          disabled={disabled}
+          activeOpacity={0.7}
+        >
+          <View
+            style={[
+              styles.recordInner,
+              isRecording && styles.recordInnerActive,
+            ]}
+          />
+        </TouchableOpacity>
+
+        {/* End call button */}
+        <TouchableOpacity
+          style={styles.endButton}
+          onPress={handleEnd}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.endIcon}>{'✕'}</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={styles.hint}>
         {isRecording ? 'Tap to send' : 'Tap to talk'}
       </Text>
-
-      {/* End call button */}
-      <TouchableOpacity
-        style={styles.endButton}
-        onPress={handleEnd}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.endIcon}>{'✕'}</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -74,6 +101,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     gap: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
   },
   recordButton: {
     width: 80,
@@ -101,6 +133,23 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.error,
   },
+  secondaryButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryButtonActive: {
+    borderColor: colors.accent,
+    backgroundColor: 'rgba(0,206,201,0.1)',
+  },
+  secondaryIcon: {
+    fontSize: 22,
+  },
   hint: {
     fontSize: 14,
     color: colors.textMuted,
@@ -112,7 +161,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing.md,
   },
   endIcon: {
     fontSize: 24,

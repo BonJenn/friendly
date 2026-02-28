@@ -18,6 +18,7 @@ export async function getDailyUsage(uid: string): Promise<DailyUsage> {
       messagesUsed: 0,
       voiceSecondsUsed: 0,
       imagesUsed: 0,
+      visionFramesUsed: 0,
       callsPlaced: 0,
       callsReceived: 0,
       date: today,
@@ -134,6 +135,45 @@ export async function checkImageCap(
   }
 
   return { allowed: true, nearCap: false };
+}
+
+export async function incrementVisionFrames(
+  uid: string,
+  amount: number = 1
+): Promise<void> {
+  const today = todayKey();
+  const ref = db().collection('usage').doc(uid).collection('days').doc(today);
+
+  await ref.set(
+    {
+      visionFramesUsed: admin.firestore.FieldValue.increment(amount),
+      date: today,
+    },
+    { merge: true }
+  );
+}
+
+export async function checkVisionCap(
+  uid: string,
+  tier: Tier
+): Promise<CapCheckResult> {
+  const limits = TIER_LIMITS[tier];
+  if (limits.visionFramesPerDay === 0) {
+    return { allowed: false, nearCap: false, reason: 'vision_not_available' };
+  }
+
+  const usage = await getDailyUsage(uid);
+  const used = usage.visionFramesUsed ?? 0;
+
+  if (used >= limits.visionFramesPerDay) {
+    return { allowed: false, nearCap: true, reason: 'vision_cap_reached' };
+  }
+
+  const remaining = limits.visionFramesPerDay - used;
+  return {
+    allowed: true,
+    nearCap: remaining <= 5,
+  };
 }
 
 export async function updateStreak(uid: string): Promise<void> {

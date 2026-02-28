@@ -59,10 +59,22 @@ export interface ImageProvider {
   generate(prompt: string, style?: string): Promise<ImageResult>;
 }
 
+// ─── Vision Provider ────────────────────────────────────────
+export interface VisionAnalysisResult {
+  description: string;
+  objects: string[];
+  mood?: string;
+}
+
+export interface VisionProvider {
+  analyzeFrame(imageBase64: string, context: string): Promise<VisionAnalysisResult>;
+}
+
 // ─── Provider Registry ──────────────────────────────────────
 export interface ProviderRegistry {
   stt: STTProvider;
   llm: LLMProvider;
   tts: TTSProvider;
   image: ImageProvider;
+  vision: VisionProvider;
 }

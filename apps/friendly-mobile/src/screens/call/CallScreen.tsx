@@ -11,6 +11,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AvatarPlaceholder } from '@/components/Avatar/RiveAvatar';
 import { Waveform } from '@/components/Call/Waveform';
 import { CallControls } from '@/components/Call/CallControls';
+import { CameraPiP } from '@/components/Call/CameraPiP';
 import { colors, spacing, typography } from '@/config/theme';
 import { useUser } from '@/context/UserContext';
 import {
@@ -24,6 +25,7 @@ import {
   stopRecording,
   playAudio,
 } from '@/services/audio';
+import { requestCameraPermission } from '@/services/camera';
 import { formatDuration } from '@/utils/time';
 import { CALL_MAX_DURATION_SECONDS } from '@/config/constants';
 import type { RootStackParamList, Emotion, AIResponse } from '@/types';
@@ -46,6 +48,8 @@ export function CallScreen() {
   const [elapsed, setElapsed] = useState(0);
   const [processing, setProcessing] = useState(false);
   const [lastResponse, setLastResponse] = useState<string>('');
+  const [cameraActive, setCameraActive] = useState(false);
+  const pendingFrameRef = useRef<string | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const startTimeRef = useRef<number>(0);
@@ -121,7 +125,10 @@ export function CallScreen() {
         return;
       }
 
-      const response: AIResponse = await sendVoiceTurn(sessionId, audioUri);
+      // Attach the latest camera frame if available
+      const visionFrame = pendingFrameRef.current ?? undefined;
+      pendingFrameRef.current = null;
+      const response: AIResponse = await sendVoiceTurn(sessionId, audioUri, visionFrame);
 
       setEmotion(response.emotion);
       setLastResponse(response.text);
@@ -152,6 +159,30 @@ export function CallScreen() {
     }
   }, [recording, sessionId]);
 
+  const handleToggleCamera = useCallback(async () => {
+    if (cameraActive) {
+      setCameraActive(false);
+      pendingFrameRef.current = null;
+      return;
+    }
+
+    const hasPermission = await requestCameraPermission();
+    if (!hasPermission) {
+      Alert.alert(
+        'Camera Permission',
+        'Friendly needs camera access so your friend can see the world with you.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    setCameraActive(true);
+  }, [cameraActive]);
+
+  const handleFrameCaptured = useCallback((base64: string) => {
+    // Store the latest frame to send with the next voice turn
+    pendingFrameRef.current = base64;
+  }, []);
+
   const handleEndCall = useCallback(async () => {
     if (timerRef.current) clearInterval(timerRef.current);
     setPhase('ending');
@@ -174,6 +205,12 @@ export function CallScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
+        {/* Camera PiP overlay */}
+        <CameraPiP
+          enabled={cameraActive}
+          onFrameCaptured={handleFrameCaptured}
+        />
+
         {/* Timer */}
         <View style={styles.topBar}>
           <Text style={styles.timer}>{formatDuration(elapsed)}</Text>
@@ -226,6 +263,8 @@ export function CallScreen() {
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
             onEndCall={handleEndCall}
+            onToggleCamera={handleToggleCamera}
+            cameraActive={cameraActive}
             disabled={phase !== 'active' || processing || friendSpeaking}
           />
         </View>

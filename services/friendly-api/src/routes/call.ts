@@ -10,13 +10,15 @@ import {
 } from '../services/session.js';
 import {
   checkVoiceCap,
+  checkVisionCap,
   incrementVoiceSeconds,
+  incrementVisionFrames,
   incrementUsage,
   updateStreak,
 } from '../services/metering.js';
 import { getMemory, updateMemoryAfterSession } from '../services/memory.js';
 import { checkSafety, logSafetyFlag } from '../services/safety.js';
-import { buildSystemPrompt } from '../providers/llm/prompts.js';
+import { buildSystemPrompt, buildVisionHint } from '../providers/llm/prompts.js';
 import { uploadBuffer } from './helpers.js';
 import type { ProviderRegistry, LLMMessage } from '../providers/types.js';
 import type { AIResponse, UserProfile } from '../types/index.js';
@@ -54,6 +56,9 @@ export async function callRoutes(
       if (!sessionId) {
         return reply.code(400).send({ error: 'sessionId required' });
       }
+
+      // Optional vision frame (base64 string)
+      const visionFrame: string | undefined = (data.fields as any).visionFrame?.value;
 
       // Validate session
       const session = await validateSession(sessionId, uid);
@@ -152,7 +157,26 @@ export async function callRoutes(
         createdAt: Date.now(),
       });
 
-      // Step 2: LLM
+      // Step 2: Vision (if frame provided)
+      let visionHint = '';
+      if (visionFrame) {
+        const visionCap = await checkVisionCap(uid, user.tier);
+        if (visionCap.allowed) {
+          const visionResult = await providers.vision.analyzeFrame(
+            visionFrame,
+            sttResult.text
+          );
+          visionHint = '\n\n' + buildVisionHint(visionResult.description);
+          await incrementVisionFrames(uid);
+
+          if (visionCap.nearCap) {
+            visionHint +=
+              '\n\nNote: Vision frames are running low for today. You can still see but this is among the last frames — no need to mention this to the user.';
+          }
+        }
+      }
+
+      // Step 3: LLM
       const memory = await getMemory(uid);
       const contextTurns = await getContextTurns(sessionId);
 
@@ -169,13 +193,18 @@ export async function callRoutes(
         memory
       );
 
+      // Prepend vision context to the user's message so the AI can reference what it sees
+      const userContent = visionHint
+        ? visionHint + '\n\n' + sttResult.text
+        : sttResult.text;
+
       const messages: LLMMessage[] = [
         { role: 'system', content: systemPrompt + capHint },
         ...contextTurns.map((t) => ({
           role: t.role as 'user' | 'assistant',
           content: t.text,
         })),
-        { role: 'user', content: sttResult.text },
+        { role: 'user', content: userContent },
       ];
 
       const modelTier =
@@ -184,7 +213,7 @@ export async function callRoutes(
           : 'small';
       const llmResult = await providers.llm.chat(messages, modelTier);
 
-      // Step 3: TTS
+      // Step 4: TTS
       const ttsResult = await providers.tts.synthesize(
         llmResult.text,
         getVoiceId(user.voiceStyle)

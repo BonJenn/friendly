@@ -46,7 +46,8 @@ export async function startCallSession(): Promise<{ sessionId: string }> {
 
 export async function sendVoiceTurn(
   sessionId: string,
-  audioUri: string
+  audioUri: string,
+  visionFrame?: string
 ): Promise<AIResponse> {
   const token = await getIdToken();
   const formData = new FormData();
@@ -56,6 +57,10 @@ export async function sendVoiceTurn(
     type: 'audio/m4a',
     name: 'voice.m4a',
   } as unknown as Blob);
+
+  if (visionFrame) {
+    formData.append('visionFrame', visionFrame);
+  }
 
   const res = await fetch(`${API_BASE_URL}/api/call/turn`, {
     method: 'POST',

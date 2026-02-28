@@ -16,6 +16,7 @@ import { MockSTTProvider } from './providers/stt/index.js';
 import { MockLLMProvider } from './providers/llm/index.js';
 import { MockTTSProvider } from './providers/tts/index.js';
 import { MockImageProvider } from './providers/image/index.js';
+import { MockVisionProvider } from './providers/vision/index.js';
 
 // ─── Firebase Admin Init ────────────────────────────────────
 admin.initializeApp({
@@ -32,6 +33,7 @@ function createProviders(): ProviderRegistry {
       llm: new MockLLMProvider(),
       tts: new MockTTSProvider(),
       image: new MockImageProvider(),
+      vision: new MockVisionProvider(),
     };
   }
 
@@ -42,6 +44,7 @@ function createProviders(): ProviderRegistry {
   //   llm: new OpenAILLMProvider(config.openaiApiKey),
   //   tts: new ElevenLabsTTSProvider(config.elevenLabsApiKey),
   //   image: new DallEImageProvider(config.openaiApiKey),
+  //   vision: new GPT4VisionProvider(config.openaiApiKey),
   // };
 
   console.log('Using MOCK providers (no real provider implementations yet)');
@@ -50,6 +53,7 @@ function createProviders(): ProviderRegistry {
     llm: new MockLLMProvider(),
     tts: new MockTTSProvider(),
     image: new MockImageProvider(),
+    vision: new MockVisionProvider(),
   };
 }
 
