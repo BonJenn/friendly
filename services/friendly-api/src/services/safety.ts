@@ -1,3 +1,5 @@
+import * as admin from 'firebase-admin';
+
 /**
  * Safety service: detect crisis signals and enforce content policy.
  *
@@ -58,7 +60,6 @@ export async function logSafetyFlag(
   type: 'crisis' | 'romantic_sexual',
   userText: string
 ): Promise<void> {
-  const admin = await import('firebase-admin');
   const db = admin.firestore();
 
   await db.collection('safety_flags').add({

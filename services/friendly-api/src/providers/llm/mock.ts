@@ -1,4 +1,4 @@
-import type { LLMProvider, LLMMessage, LLMResponseStructured, ModelTier } from '../types.js';
+import type { LLMProvider, LLMMessage, LLMResponseStructured, LLMClassification, AudioChatResult, AudioStreamChunk, ModelTier } from '../types.js';
 import type { Emotion } from '../../types/index.js';
 
 /**
@@ -63,5 +63,66 @@ export class MockLLMProvider implements LLMProvider {
       followUpText: null,
       shouldGenerateImage: false,
     };
+  }
+
+  async *chatStreamText(
+    messages: LLMMessage[]
+  ): AsyncGenerator<string, void, unknown> {
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    this.turnCount++;
+    const response = this.responses[this.turnCount % this.responses.length];
+    // Yield word by word to simulate streaming
+    const words = response.text.split(' ');
+    for (const word of words) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      yield word + ' ';
+    }
+  }
+
+  async classifyResponse(text: string): Promise<LLMClassification> {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    return {
+      emotion: 'calm',
+      intensity: 0.5,
+      shouldEndSession: false,
+      followUpDelayMinutes: null,
+      followUpText: null,
+    };
+  }
+
+  async chatAudio(
+    systemPrompt: string,
+    contextMessages: LLMMessage[],
+    userAudioBase64: string,
+    audioFormat: string,
+    voice: string
+  ): Promise<AudioChatResult> {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    this.turnCount++;
+    const response = this.responses[this.turnCount % this.responses.length];
+    return {
+      audioBase64: '',
+      transcript: response.text,
+    };
+  }
+
+  async *chatAudioStream(
+    systemPrompt: string,
+    contextMessages: LLMMessage[],
+    userAudioBase64: string,
+    audioFormat: string,
+    voice: string
+  ): AsyncGenerator<AudioStreamChunk, string, unknown> {
+    this.turnCount++;
+    const response = this.responses[this.turnCount % this.responses.length];
+
+    // Yield a few dummy chunks with delays to simulate streaming
+    for (let i = 0; i < 3; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      // Yield an empty WAV chunk (mock — no real audio)
+      yield { audioBase64: '', index: i };
+    }
+
+    return response.text;
   }
 }

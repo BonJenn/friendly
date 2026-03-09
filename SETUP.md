@@ -37,7 +37,7 @@ In the Firebase Console:
 
 ### iOS
 1. Firebase Console → Project Settings → Add iOS app
-2. Bundle ID: `com.friendly.app`
+2. Bundle ID: `com.friendly.ai.app`
 3. Download `GoogleService-Info.plist`
 4. Place in `apps/friendly-mobile/GoogleService-Info.plist`
 

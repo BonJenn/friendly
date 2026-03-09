@@ -4,7 +4,7 @@ import { config } from '../config.js';
 /**
  * Upload a buffer to Cloud Storage and return a URL.
  * In emulator mode, saves locally and returns a placeholder URL.
- * In production, uploads to GCS and returns a signed URL.
+ * In production, uploads to GCS and returns a public URL.
  */
 export async function uploadBuffer(
   buffer: Buffer,
@@ -29,7 +29,7 @@ export async function uploadBuffer(
     return `http://${storageEmulator}/v0/b/${config.storageBucket}/o/${encodeURIComponent(path)}?alt=media`;
   }
 
-  // Production: upload and get a signed URL
+  // Production: upload and make publicly readable
   const bucket = admin.storage().bucket(config.storageBucket);
   const file = bucket.file(path);
 
@@ -40,10 +40,5 @@ export async function uploadBuffer(
     },
   });
 
-  const [signedUrl] = await file.getSignedUrl({
-    action: 'read',
-    expires: Date.now() + config.audioSignedUrlExpiryMinutes * 60 * 1000,
-  });
-
-  return signedUrl;
+  return `https://storage.googleapis.com/${config.storageBucket}/${path}`;
 }

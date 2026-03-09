@@ -1,7 +1,7 @@
 export const config = {
   port: parseInt(process.env.PORT ?? '8080', 10),
-  projectId: process.env.GCP_PROJECT_ID ?? 'friendly-app',
-  storageBucket: process.env.STORAGE_BUCKET ?? 'friendly-app.appspot.com',
+  projectId: process.env.GCP_PROJECT_ID ?? 'friendly-ai-mobile',
+  storageBucket: process.env.STORAGE_BUCKET ?? 'friendly-ai-mobile-storage',
 
   // AI provider keys (set via env / Secret Manager)
   openaiApiKey: process.env.OPENAI_API_KEY ?? '',

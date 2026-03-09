@@ -1,9 +1,7 @@
 import { Platform } from 'react-native';
 
 // Replace with your actual Cloud Run URL after deployment
-export const API_BASE_URL = __DEV__
-  ? 'http://192.168.1.78:8080'
-  : 'https://friendly-api-823274281027.us-central1.run.app';
+export const API_BASE_URL = 'https://friendly-api-823274281027.us-central1.run.app';
 
 export const REVENUCAT_API_KEY = Platform.select({
   ios: 'appl_YOUR_REVENUECAT_IOS_KEY',
@@ -20,10 +18,10 @@ export const CALL_MAX_DURATION_SECONDS = 300; // 5 min hard cap on client side
 export const RECORDING_MAX_DURATION_MS = 30_000; // 30s per voice turn
 
 // Silence detection for continuous call mode
-export const SILENCE_THRESHOLD_DB = -45; // dB above = speech, below = silence
-export const SILENCE_DURATION_MS = 1_500; // silence after speech to trigger send
+export const SILENCE_THRESHOLD_DB = -35; // dB above = speech, below = silence
+export const SILENCE_DURATION_MS = 1200; // silence after speech to trigger send
 export const METERING_POLL_INTERVAL_MS = 100; // polling frequency
-export const MIN_SPEECH_DURATION_MS = 400; // minimum speech before silence detection kicks in
+export const MIN_SPEECH_DURATION_MS = 600; // minimum speech before silence detection kicks in
 export const MESSAGE_INPUT_MAX_LENGTH = 500;
 
 export const PERSONA_LABELS = {

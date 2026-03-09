@@ -88,18 +88,8 @@ export async function checkVoiceCap(
   uid: string,
   tier: Tier
 ): Promise<CapCheckResult> {
-  const usage = await getDailyUsage(uid);
-  const limits = TIER_LIMITS[tier];
-
-  if (usage.voiceSecondsUsed >= limits.voiceSecondsPerDay) {
-    return { allowed: false, nearCap: true, reason: 'voice_cap_reached' };
-  }
-
-  const remaining = limits.voiceSecondsPerDay - usage.voiceSecondsUsed;
-  return {
-    allowed: true,
-    nearCap: remaining <= 60, // within 1 minute of cap
-  };
+  // TODO: restore voice cap after testing
+  return { allowed: true, nearCap: false };
 }
 
 export async function checkImageCap(

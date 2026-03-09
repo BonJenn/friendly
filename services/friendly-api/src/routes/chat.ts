@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import * as admin from 'firebase-admin';
 import { authMiddleware } from '../middleware/auth.js';
 import { createSession, validateSession, addTurn, getContextTurns, endSession, getSessionTurns } from '../services/session.js';
 import { checkMessageCap, incrementUsage, updateStreak } from '../services/metering.js';
@@ -43,7 +44,6 @@ export async function chatRoutes(
       const session = await validateSession(sessionId, uid);
 
       // Get user profile
-      const admin = await import('firebase-admin');
       const db = admin.firestore();
       const userDoc = await db.collection('users').doc(uid).get();
       if (!userDoc.exists) {

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Friendly",
-    "slug": "friendly",
+    "slug": "friendly-ai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
@@ -9,14 +9,20 @@
     "splash": {
       "backgroundColor": "#0A0A0F"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.friendly.app",
+      "bundleIdentifier": "com.friendly.ai.app",
       "usesAppleSignIn": true,
       "infoPlist": {
         "NSMicrophoneUsageDescription": "Friendly needs microphone access for voice calls.",
-        "UIBackgroundModes": ["audio", "remote-notification"]
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio",
+          "remote-notification"
+        ]
       },
       "googleServicesFile": "./GoogleService-Info.plist"
     },
@@ -24,9 +30,15 @@
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0F"
       },
-      "package": "com.friendly.app",
+      "package": "com.friendly.ai.app",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["RECORD_AUDIO", "RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+      "permissions": [
+        "RECORD_AUDIO",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "plugins": [
       "@react-native-firebase/app",
@@ -37,7 +49,9 @@
         {
           "icon": "./src/assets/notification-icon.png",
           "color": "#6C5CE7",
-          "sounds": ["./src/assets/sounds/call-ringtone.wav"]
+          "sounds": [
+            "./src/assets/sounds/call-ringtone.wav"
+          ]
         }
       ],
       [
@@ -45,7 +59,15 @@
         {
           "microphonePermission": "Friendly needs microphone access for voice calls."
         }
-      ]
-    ]
+      ],
+      "expo-asset",
+      "./plugins/withModularHeaders"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "745ef7be-33f5-4bfe-ab03-2a9f80cc97fd"
+      }
+    },
+    "owner": "bonjenn"
   }
 }

@@ -29,11 +29,51 @@ export interface LLMResponseStructured {
 
 export type ModelTier = 'small' | 'large';
 
+export interface LLMClassification {
+  emotion: Emotion;
+  intensity: number;
+  shouldEndSession: boolean;
+  followUpDelayMinutes: number | null;
+  followUpText: string | null;
+}
+
+export interface AudioChatResult {
+  audioBase64: string;
+  transcript: string;
+}
+
+export interface AudioStreamChunk {
+  audioBase64: string;
+  index: number;
+}
+
 export interface LLMProvider {
   chat(
     messages: LLMMessage[],
     modelTier: ModelTier
   ): Promise<LLMResponseStructured>;
+
+  chatStreamText(
+    messages: LLMMessage[]
+  ): AsyncGenerator<string, void, unknown>;
+
+  classifyResponse(text: string): Promise<LLMClassification>;
+
+  chatAudio(
+    systemPrompt: string,
+    contextMessages: LLMMessage[],
+    userAudioBase64: string,
+    audioFormat: string,
+    voice: string
+  ): Promise<AudioChatResult>;
+
+  chatAudioStream(
+    systemPrompt: string,
+    contextMessages: LLMMessage[],
+    userAudioBase64: string,
+    audioFormat: string,
+    voice: string
+  ): AsyncGenerator<AudioStreamChunk, string, unknown>;
 }
 
 // ─── TTS Provider ───────────────────────────────────────────

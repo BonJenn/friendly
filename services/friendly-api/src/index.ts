@@ -2,6 +2,7 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
+import websocket from '@fastify/websocket';
 import * as admin from 'firebase-admin';
 import { config } from './config.js';
 import { registerRateLimit } from './middleware/rateLimit.js';
@@ -15,7 +16,7 @@ import { imageRoutes } from './routes/images.js';
 import type { ProviderRegistry } from './providers/types.js';
 import { MockSTTProvider, WhisperSTTProvider } from './providers/stt/index.js';
 import { MockLLMProvider, OpenAILLMProvider } from './providers/llm/index.js';
-import { MockTTSProvider, ElevenLabsTTSProvider } from './providers/tts/index.js';
+import { MockTTSProvider, OpenAITTSProvider } from './providers/tts/index.js';
 import { MockImageProvider, DallEImageProvider } from './providers/image/index.js';
 import { MockVisionProvider, GPT4VisionProvider } from './providers/vision/index.js';
 
@@ -42,7 +43,7 @@ function createProviders(): ProviderRegistry {
   return {
     stt: new WhisperSTTProvider(config.openaiApiKey),
     llm: new OpenAILLMProvider(config.openaiApiKey),
-    tts: new ElevenLabsTTSProvider(config.elevenLabsApiKey),
+    tts: new OpenAITTSProvider(config.openaiApiKey),
     image: new DallEImageProvider(config.openaiApiKey),
     vision: new GPT4VisionProvider(config.openaiApiKey),
   };
@@ -70,6 +71,7 @@ async function main() {
       fileSize: config.maxAudioFileSizeMb * 1024 * 1024,
     },
   });
+  await app.register(websocket);
   await registerRateLimit(app);
 
   // Health check

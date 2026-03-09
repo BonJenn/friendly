@@ -16,16 +16,21 @@ import { colors, spacing, typography } from '@/config/theme';
 import { useUser } from '@/context/UserContext';
 import {
   startCallSession,
-  sendVoiceTurn,
+  sendVoiceTurnStreaming,
   endCallSession,
   greetCall,
+  CallWebSocket,
 } from '@/services/api';
+import * as FileSystem from 'expo-file-system';
 import {
   requestMicPermission,
   startRecordingWithMetering,
   stopRecording,
   cancelRecording,
   playAudio,
+  AudioQueue,
+  cleanupAudioChunks,
+  setPlaybackMode,
 } from '@/services/audio';
 import { requestCameraPermission } from '@/services/camera';
 import { formatDuration } from '@/utils/time';
@@ -55,6 +60,9 @@ export function CallScreen() {
   const [lastResponse, setLastResponse] = useState<string>('');
   const [cameraActive, setCameraActive] = useState(false);
   const pendingFrameRef = useRef<string | null>(null);
+  const audioQueueRef = useRef<AudioQueue | null>(null);
+  const wsRef = useRef<CallWebSocket | null>(null);
+  const shouldEndRef = useRef(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval>>();
   const startTimeRef = useRef<number>(0);
@@ -113,7 +121,6 @@ export function CallScreen() {
     try {
       const audioUri = await stopRecording();
       if (!audioUri || !mountedRef.current) {
-        // No audio captured — go back to listening
         if (mountedRef.current && callStateRef.current !== 'ending') {
           startListening();
         }
@@ -125,38 +132,72 @@ export function CallScreen() {
 
       const visionFrame = pendingFrameRef.current ?? undefined;
       pendingFrameRef.current = null;
-      const response: AIResponse = await sendVoiceTurn(sid, audioUri, visionFrame);
 
-      if (!mountedRef.current) return;
+      // ─── WebSocket path: stream audio chunks as they arrive ───
+      if (wsRef.current?.isConnected()) {
+        // Read the recorded WAV file as base64
+        const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
 
-      setEmotion(response.emotion);
-      setLastResponse(response.text);
-
-      if (response.audioUrl) {
-        updateCallState('friend_speaking');
-        const sound = await playAudio(response.audioUrl);
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if ('didJustFinish' in status && status.didJustFinish) {
-            sound.unloadAsync();
+        // Set up audio queue for this turn
+        shouldEndRef.current = false;
+        await setPlaybackMode();
+        const queue = new AudioQueue(
+          undefined,
+          // onAllFinished — called after the last chunk plays
+          () => {
             if (!mountedRef.current) return;
-
-            if (response.shouldEndSession) {
+            if (shouldEndRef.current) {
               updateCallState('ending');
-              setTimeout(() => {
-                handleEndCall();
-              }, 2000);
+              setTimeout(() => handleEndCall(), 2000);
             } else {
               startListening();
             }
           }
+        );
+        audioQueueRef.current = queue;
+
+        // Send the audio turn over WebSocket — chunks arrive via callbacks
+        wsRef.current.sendAudioTurn(audioBase64, visionFrame);
+        return;
+      }
+
+      // ─── REST fallback ────────────────────────────────────────
+      const response = await sendVoiceTurnStreaming(sid, audioUri, visionFrame);
+      if (!mountedRef.current) return;
+
+      setEmotion(response.emotion as Emotion);
+      setLastResponse(response.text);
+
+      if (response.audioChunks && response.audioChunks.length > 0) {
+        updateCallState('friend_speaking');
+        await setPlaybackMode();
+
+        const queue = new AudioQueue(
+          (text) => {
+            if (!mountedRef.current) return;
+            setLastResponse(text);
+          },
+          () => {
+            if (!mountedRef.current) return;
+            if (response.shouldEndSession) {
+              updateCallState('ending');
+              setTimeout(() => handleEndCall(), 2000);
+            } else {
+              startListening();
+            }
+          }
+        );
+        audioQueueRef.current = queue;
+
+        response.audioChunks.forEach((chunk, index) => {
+          queue.enqueue({ base64: chunk.base64, index, text: chunk.text });
         });
       } else {
-        // No audio in response — resume listening
         if (response.shouldEndSession) {
           updateCallState('ending');
-          setTimeout(() => {
-            handleEndCall();
-          }, 2000);
+          setTimeout(() => handleEndCall(), 2000);
         } else {
           startListening();
         }
@@ -189,6 +230,41 @@ export function CallScreen() {
         if (cancelled) return;
         setSessionId(sid);
         startTimeRef.current = Date.now();
+
+        // Open WebSocket for streaming audio (non-blocking — falls back to REST if it fails)
+        const ws = new CallWebSocket();
+        try {
+          await ws.connect(sid, {
+            onAudioChunk: (index, base64) => {
+              if (!mountedRef.current) return;
+              // Transition to friend_speaking on first chunk
+              if (callStateRef.current !== 'friend_speaking') {
+                updateCallState('friend_speaking');
+              }
+              audioQueueRef.current?.enqueue({
+                base64,
+                index,
+                text: '',
+                format: 'wav',
+              });
+            },
+            onTurnComplete: (data) => {
+              if (!mountedRef.current) return;
+              setEmotion(data.emotion as Emotion);
+              setLastResponse(data.text);
+              shouldEndRef.current = data.shouldEndSession;
+              // Signal to the queue that no more chunks are coming
+              audioQueueRef.current?.markComplete();
+            },
+            onError: (msg) => {
+              console.warn('WS error:', msg);
+            },
+          });
+          wsRef.current = ws;
+          console.log('WebSocket connected for streaming audio');
+        } catch (err) {
+          console.warn('WebSocket connection failed, will use REST fallback:', err);
+        }
 
         // Start elapsed timer
         timerRef.current = setInterval(() => {
@@ -272,8 +348,19 @@ export function CallScreen() {
     if (timerRef.current) clearInterval(timerRef.current);
     updateCallState('ending');
 
-    // Clean up any active recording
+    // Close WebSocket
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    // Clean up any active recording and audio queue
     await cancelRecording();
+    if (audioQueueRef.current) {
+      await audioQueueRef.current.stop();
+      audioQueueRef.current = null;
+    }
+    cleanupAudioChunks();
 
     const sid = sessionIdRef.current;
     if (sid) {

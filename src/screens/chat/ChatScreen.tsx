@@ -44,39 +44,58 @@ export function ChatScreen() {
       .where('status', '==', 'active')
       .orderBy('startedAt', 'desc')
       .limit(1)
-      .onSnapshot(async (snap) => {
-        if (snap.empty) {
-          // No active session, create one
+      .onSnapshot(
+        async (snap) => {
+          if (snap.empty) {
+            // No active session, create one
+            try {
+              const { sessionId: sid } = await startChatSession();
+              setSessionId(sid);
+            } catch (err) {
+              console.error('Failed to start chat session:', err);
+            }
+            setInitializing(false);
+            return;
+          }
+
+          const session = snap.docs[0];
+          setSessionId(session.id);
+
+          // Load turns
           try {
-            const { sessionId: sid } = await startChatSession();
-            setSessionId(sid);
+            const turnsSnap = await db
+              .collection('sessions')
+              .doc(session.id)
+              .collection('turns')
+              .orderBy('createdAt', 'asc')
+              .limit(50)
+              .get();
+
+            const msgs: ChatMessage[] = turnsSnap.docs.map((d) => ({
+              id: d.id,
+              ...d.data(),
+            })) as ChatMessage[];
+
+            setMessages(msgs);
           } catch (err) {
-            console.error('Failed to start chat session:', err);
+            console.error('Failed to load turns:', err);
           }
           setInitializing(false);
-          return;
+        },
+        (error) => {
+          // Firestore listener error — fall back to creating session via API
+          console.error('Session listener error:', error);
+          (async () => {
+            try {
+              const { sessionId: sid } = await startChatSession();
+              setSessionId(sid);
+            } catch (err) {
+              console.error('Failed to start chat session:', err);
+            }
+            setInitializing(false);
+          })();
         }
-
-        const session = snap.docs[0];
-        setSessionId(session.id);
-
-        // Load turns
-        const turnsSnap = await db
-          .collection('sessions')
-          .doc(session.id)
-          .collection('turns')
-          .orderBy('createdAt', 'asc')
-          .limit(50)
-          .get();
-
-        const msgs: ChatMessage[] = turnsSnap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        })) as ChatMessage[];
-
-        setMessages(msgs);
-        setInitializing(false);
-      });
+      );
 
     return unsub;
   }, [profile]);

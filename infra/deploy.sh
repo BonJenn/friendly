@@ -33,13 +33,14 @@ gcloud run deploy "${SERVICE_NAME}" \
   --cpu=1 \
   --min-instances=0 \
   --max-instances=10 \
-  --timeout=60s \
+  --timeout=360s \
   --concurrency=80 \
   --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID}" \
-  --set-env-vars="STORAGE_BUCKET=${PROJECT_ID}.appspot.com" \
-  --set-env-vars="USE_MOCK_PROVIDERS=true" \
+  --set-env-vars="STORAGE_BUCKET=${PROJECT_ID}-storage" \
+  --set-env-vars="USE_MOCK_PROVIDERS=false" \
   --set-env-vars="NODE_ENV=production" \
-  --set-env-vars="LOG_LEVEL=info"
+  --set-env-vars="LOG_LEVEL=info" \
+  --set-env-vars="OPENAI_API_KEY=${OPENAI_API_KEY:?Set OPENAI_API_KEY}"
 
 # ─── Step 3: Get service URL ────────────────────────────────
 SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" \
