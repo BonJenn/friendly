@@ -466,7 +466,6 @@ async function handleStreamingTurn(
     return;
   }
 
-  // Vision processing
   const visionPromise = (async () => {
     if (!visionFrame) return '';
     const visionCap = await checkVisionCap(uid, user.tier);
@@ -486,7 +485,7 @@ async function handleStreamingTurn(
   ]);
 
   const t1 = Date.now();
-  console.log(`ws/turn: prep took ${t1 - t0}ms`);
+  console.log(`ws/turn: prep took ${t1 - t0}ms, visionFrame=${!!visionFrame}, visionHint=${!!visionHint}`);
 
   // Build system prompt
   let systemPrompt = buildStreamingSystemPrompt(

@@ -30,7 +30,7 @@ export const TIER_LIMITS: Record<Tier, TierLimits> = {
     voiceSecondsPerDay: 300,
     proactiveCallsPerWeek: 0,
     imagesPerWeek: 0,
-    visionFramesPerDay: 0,
+    visionFramesPerDay: 10,
     memoryDepth: 'shallow',
   },
   starter: {

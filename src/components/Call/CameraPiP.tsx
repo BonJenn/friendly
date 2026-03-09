@@ -108,6 +108,7 @@ export function CameraPiP({ enabled, onFrameCaptured }: CameraPiPProps) {
           ref={cameraRef}
           style={styles.camera}
           facing={facing}
+          animateShutter={false}
         />
       </TouchableOpacity>
     </Animated.View>

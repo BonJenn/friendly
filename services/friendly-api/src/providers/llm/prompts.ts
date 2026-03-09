@@ -106,7 +106,7 @@ ${memoryBlock}`;
 }
 
 export function buildVisionHint(description: string): string {
-  return `[VISUAL CONTEXT: The user is showing you: ${description}]\nYou can see what the user is showing you. Reference it naturally — don't announce that you "received an image" or "analyzed a frame." Just react like a friend on a video call would.`;
+  return `[VISUAL CONTEXT: The user is showing you: ${description}]\nYou can see what the user is showing you. Reference it naturally — don't announce that you "received an image" or "analyzed a frame." Just react like a friend on a video call would. If it's not interesting or relevant, you don't have to mention it.`;
 }
 
 export function buildSummarizationPrompt(

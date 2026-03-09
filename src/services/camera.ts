@@ -16,6 +16,7 @@ export async function captureFrame(
       quality: 0.3,
       base64: true,
       skipProcessing: true,
+      shutterSound: false,
     });
     return photo?.base64 ?? null;
   } catch {
@@ -57,4 +58,4 @@ export function detectSignificantChange(
 }
 
 /** Interval between frame captures in milliseconds */
-export const FRAME_CAPTURE_INTERVAL_MS = 8_000;
+export const FRAME_CAPTURE_INTERVAL_MS = 3_000;
